@@ -1,1 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Global Briefing</title>
+<style>
+  :root {
+    --bg: #f0f2f5;
+    --card-bg: #ffffff;
+    --text: #111827;
+    --text-secondary: #4b5563;
+    --muted: #9ca3af;
+    --border: #e5e7eb;
+    --accent: #2563eb;
+    --accent-light: #dbeafe;
+    --reuters: #ff6600;
+    --wsj: #0274b6;
+    --nikkei: #c0392b;
+    --bloomberg: #7c3aed;
+    --mckinsey: #0d9488;
+    --highlight-bg: linear-gradient(135deg, #fef9c3 0%, #fef3c7 100%);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 0 20px; }
 
+  /* ── Header ── */
+  .site-header {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: #fff; padding: 28px 0 24px; margin-bottom: 24px;
+  }
+  .site-header .container {
+    display: flex; flex-wrap: wrap; align-items: center;
+    justify-content: space-between; gap: 12px;
+  }
+  .site-title { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; }
+  .site-subtitle { font-size: 0.82rem; color: #94a3b8; margin-top: 2px; }
+  .header-actions { display: flex; align-items: center; gap: 14px; }
+  .updated-text { font-size: 0.78rem; color: #94a3b8; }
+  .refresh-btn {
+    padding: 8px 20px; border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px; background: rgba(255,255,255,0.1);
+    color: #fff; font-size: 0.82rem; cursor: pointer;
+    font-weight: 500; transition: all .15s; backdrop-filter: blur(4px);
+  }
+  .refresh-btn:hover { background: rgba(255,255,255,0.2); }
+  .refresh-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── Errors ── */
+  .errors-banner {
+    background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px;
+    padding: 12px 16px; margin-bottom: 20px; font-size: 0.82rem; color: #991b1b;
+  }
+
+  /* ── Stats bar ── */
+  .stats-bar {
+    display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 24px;
+    padding: 14px 18px; background: var(--card-bg); border-radius: 10px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .stat-item {
+    display: flex; flex-direction: column; align-items: center; padding: 0 12px;
+  }
+  .stat-item:not(:last-child) { border-right: 1px solid var(--border); }
+  .stat-number { font-size: 1.3rem; font-weight: 800; color: var(--accent); }
+  .stat-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+
+  /* ── Section label ── */
+  .section-label {
+    font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--accent); margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* ── Top Stories ── */
+  .top-stories { margin-bottom: 28px; }
+  .top-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px;
+  }
+  .top-card {
+    background: var(--card-bg); border-radius: 12px; padding: 18px 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    border-left: 4px solid var(--accent); transition: box-shadow .2s, transform .2s;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .top-card:hover { box-shadow: 0 8px 25px rgba(0,0,0,0.08); transform: translateY(-1px); }
+  .top-card a {
+    color: var(--text); text-decoration: none; font-weight: 700;
+    font-size: 1rem; line-height: 1.4;
+  }
+  .top-card a:hover { color: var(--accent); }
+  .top-card .reason { font-size: 0.78rem; color: var(--text-secondary); line-height: 1.5; }
+
+  /* ── Region Buttons ── */
+  .region-section { margin-bottom: 28px; }
+  .region-grid {
+    display: flex; flex-wrap: wrap; gap: 10px;
+  }
+  .region-btn {
+    display: flex; align-items: center; justify-content: center;
+    padding: 10px 18px;
+    background: var(--card-bg); border: 1.5px solid var(--border);
+    border-radius: 8px; cursor: pointer; transition: all .2s;
+    text-decoration: none; color: var(--text);
+    font-size: 0.82rem; font-weight: 600; white-space: nowrap;
+  }
+  .region-btn:hover {
+    border-color: var(--accent); color: var(--accent);
+    transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+  }
+
+  /* ── Category Sections ── */
+  .category-section { margin-bottom: 28px; }
+  .cat-header {
+    display: flex; align-items: center; gap: 10px;
+    cursor: pointer; padding: 12px 0 8px; user-select: none;
+  }
+  .cat-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.85rem; color: #fff; flex-shrink: 0;
+  }
+  .cat-header h2 { font-size: 1.05rem; font-weight: 700; }
+  .cat-count {
+    font-size: 0.7rem; font-weight: 600; padding: 2px 9px;
+    border-radius: 10px; color: #fff;
+  }
+  .cat-toggle {
+    font-size: 0.75rem; color: var(--muted); margin-left: auto; transition: transform .2s;
+  }
+  .cat-body { display: block; }
+  .cat-body.collapsed { display: none; }
+
+  /* ── Article Cards ── */
+  .card {
+    background: var(--card-bg); border-radius: 10px; border-left: 3px solid var(--border);
+    padding: 14px 18px; margin-bottom: 8px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04); transition: all .15s;
+  }
+  .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.07); transform: translateY(-0.5px); }
+  .card.highlight { background: var(--highlight-bg); border-left-width: 4px; }
+  .card.major-story { border-left-width: 5px; }
+  .card-meta {
+    display: flex; align-items: center; gap: 7px; margin-bottom: 6px; flex-wrap: wrap;
+  }
+  .source-badge {
+    font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;
+    color: #fff; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.03em;
+  }
+  .multi-source {
+    font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;
+    background: var(--accent); color: #fff; white-space: nowrap;
+  }
+  .region-badge {
+    font-size: 0.6rem; font-weight: 700; padding: 2px 7px; border-radius: 4px;
+    white-space: nowrap; text-transform: uppercase; letter-spacing: 0.04em;
+    border: 1px solid; opacity: 0.85;
+  }
+  .time-ago { font-size: 0.72rem; color: var(--muted); margin-left: auto; }
+  .card a {
+    color: var(--text); text-decoration: none; font-weight: 600;
+    font-size: 0.92rem; line-height: 1.45; display: block;
+  }
+  .card a:hover { color: var(--accent); }
+  .reason { font-size: 0.76rem; color: var(--text-secondary); margin-top: 5px; line-height: 1.45; }
+
+  .source-reuters { background: var(--reuters); }
+  .source-wsj { background: var(--wsj); }
+  .source-nikkei { background: var(--nikkei); }
+  .source-bloomberg { background: var(--bloomberg); }
+  .source-mckinsey { background: var(--mckinsey); }
+  .border-reuters { border-left-color: var(--reuters); }
+  .border-wsj { border-left-color: var(--wsj); }
+  .border-nikkei { border-left-color: var(--nikkei); }
+  .border-bloomberg { border-left-color: var(--bloomberg); }
+  .border-mckinsey { border-left-color: var(--mckinsey); }
+
+  /* ── Back button (region view) ── */
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 18px; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--card-bg); color: var(--text); font-size: 0.85rem;
+    cursor: pointer; font-weight: 500; transition: all .15s; margin-bottom: 20px;
+  }
+  .back-btn:hover { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+
+  /* ── Region view header ── */
+  .region-view-header {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 24px; flex-wrap: wrap;
+  }
+  .region-view-header h2 { font-size: 1.4rem; font-weight: 800; }
+  .region-article-count {
+    font-size: 0.82rem; color: var(--muted); padding: 4px 12px;
+    background: var(--card-bg); border-radius: 20px; border: 1px solid var(--border);
+  }
+
+  /* ── Loading ── */
+  .loading { text-align: center; padding: 80px 0; color: var(--muted); font-size: 0.95rem; }
+  .spinner {
+    display: inline-block; width: 32px; height: 32px;
+    border: 3px solid var(--border); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin .7s linear infinite; margin-bottom: 14px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Footer ── */
+  .site-footer {
+    text-align: center; padding: 24px 0 32px;
+    font-size: 0.75rem; color: var(--muted);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    .site-title { font-size: 1.3rem; }
+    .top-grid { grid-template-columns: 1fr; }
+    .card { padding: 12px 14px; }
+    .stats-bar { gap: 10px; padding: 10px 12px; }
+    .stat-item { padding: 0 8px; }
+    .region-btn { min-width: 100px; padding: 10px 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="site-header">
+  <div class="container">
+    <div>
+      <div class="site-title">Global Briefing</div>
+      <div class="site-subtitle">48-hour news digest &middot; Reuters, WSJ, Bloomberg, Nikkei Asia, McKinsey</div>
+    </div>
+    <div class="header-actions">
+      <span class="updated-text" id="updated"></span>
+      <button class="refresh-btn" id="refreshBtn" onclick="loadNews(true)">Refresh</button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div id="errors"></div>
+  <div id="content">
+    <div class="loading"><div class="spinner"></div><br>Loading news feeds...</div>
+  </div>
+  <div class="site-footer">Sources: Reuters, Wall Street Journal, Bloomberg, Nikkei Asia, McKinsey Insights</div>
+</div>
+
+<script>
+/* ── Constants ── */
+const CAT_META = {
+  'Climate & Green Finance':             { icon: 'C', color: '#059669' },
+  'Infrastructure & Development Finance': { icon: 'I', color: '#0284c7' },
+  'Geopolitics & International Affairs':  { icon: 'G', color: '#dc2626' },
+  'Technology & Innovation':              { icon: 'T', color: '#7c3aed' },
+  'Breaking / Trending':                  { icon: 'B', color: '#ea580c' },
+};
+const CAT_ORDER = [
+  'Climate & Green Finance', 'Infrastructure & Development Finance',
+  'Geopolitics & International Affairs', 'Technology & Innovation', 'Breaking / Trending'
+];
+
+const REGION_META = {
+  'Greater China': { color: '#dc2626', label: 'Greater China' },
+  'ASEAN':         { color: '#ea580c', label: 'ASEAN' },
+  'North America': { color: '#059669', label: 'N. America' },
+  'Europe':        { color: '#2563eb', label: 'Europe' },
+  'Middle East':   { color: '#d97706', label: 'Middle East' },
+  'LATAM':         { color: '#0d9488', label: 'LATAM' },
+  'Other':         { color: '#6b7280', label: 'Other' },
+};
+const REGION_ORDER = ['Greater China', 'ASEAN', 'North America', 'Europe', 'Middle East', 'LATAM', 'Other'];
+
+let _newsData = null;
+let _allArticles = [];
+
+/* ── Helpers ── */
+function sourceClass(n) {
+  n = n.toLowerCase();
+  if (n.includes('reuters')) return 'reuters';
+  if (n.includes('wsj')) return 'wsj';
+  if (n.includes('nikkei')) return 'nikkei';
+  if (n.includes('bloomberg')) return 'bloomberg';
+  if (n.includes('mckinsey')) return 'mckinsey';
+  return '';
+}
+function timeAgo(iso) {
+  if (!iso) return '';
+  const d = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (d < 60) return 'just now';
+  if (d < 3600) return Math.floor(d / 60) + 'm ago';
+  if (d < 86400) return Math.floor(d / 3600) + 'h ago';
+  return Math.floor(d / 86400) + 'd ago';
+}
+function escapeHtml(s) {
+  const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
+}
+
+/* ── Build card HTML ── */
+function buildCardHtml(a, showRegion) {
+  const sc = sourceClass(a.source);
+  const highlight = a.score >= 5 ? ' highlight' : '';
+  const major = (a.source_count >= 3) ? ' major-story' : '';
+  let meta = `<span class="source-badge source-${sc}">${escapeHtml(a.source)}</span>`;
+  if (a.source_count >= 2) {
+    meta += `<span class="multi-source" title="${escapeHtml((a.co_sources||[]).join(', '))}">${a.source_count} outlets</span>`;
+  }
+  if (showRegion && a.region) {
+    const rm = REGION_META[a.region] || { color: '#6b7280' };
+    meta += `<span class="region-badge" style="color:${rm.color};border-color:${rm.color}">${escapeHtml(a.region)}</span>`;
+  }
+  meta += `<span class="time-ago">${timeAgo(a.published_iso)}</span>`;
+  return `<div class="card border-${sc}${highlight}${major}">
+    <div class="card-meta">${meta}</div>
+    <a href="${escapeHtml(a.link)}" target="_blank" rel="noopener">${escapeHtml(a.title)}</a>
+    <div class="reason">${escapeHtml(a.reason)}</div>
+  </div>`;
+}
+
+/* ── Build top-card HTML ── */
+function buildTopCardHtml(a, borderColor) {
+  const sc = sourceClass(a.source);
+  let meta = `<span class="source-badge source-${sc}">${escapeHtml(a.source)}</span>`;
+  if (a.source_count >= 2) {
+    meta += `<span class="multi-source" title="${escapeHtml((a.co_sources||[]).join(', '))}">${a.source_count} outlets</span>`;
+  }
+  if (a.region) {
+    const rm = REGION_META[a.region] || { color: '#6b7280' };
+    meta += `<span class="region-badge" style="color:${rm.color};border-color:${rm.color}">${escapeHtml(a.region)}</span>`;
+  }
+  meta += `<span class="time-ago">${timeAgo(a.published_iso)}</span>`;
+  return `<div class="top-card" style="border-left-color:${borderColor}">
+    <div class="card-meta">${meta}</div>
+    <a href="${escapeHtml(a.link)}" target="_blank" rel="noopener">${escapeHtml(a.title)}</a>
+    <div class="reason">${escapeHtml(a.reason)}</div>
+  </div>`;
+}
+
+/* ── Build categories HTML ── */
+function buildCategoriesHtml(articles, showRegion) {
+  const grouped = {};
+  for (const a of articles) (grouped[a._cat] = grouped[a._cat] || []).push(a);
+  let html = '';
+  for (const cat of CAT_ORDER) {
+    const items = grouped[cat] || [];
+    if (!items.length) continue;
+    const id = cat.replace(/[^a-zA-Z]/g, '') + (showRegion ? '' : 'R');
+    const m = CAT_META[cat] || { icon: '?', color: '#666' };
+    html += `<div class="category-section">
+      <div class="cat-header" onclick="toggleCat('${id}')">
+        <div class="cat-icon" style="background:${m.color}">${m.icon}</div>
+        <h2>${escapeHtml(cat)}</h2>
+        <span class="cat-count" style="background:${m.color}">${items.length}</span>
+        <span class="cat-toggle" id="toggle-${id}">&#9660;</span>
+      </div>
+      <div class="cat-body" id="body-${id}">`;
+    for (const a of items) html += buildCardHtml(a, showRegion);
+    html += '</div></div>';
+  }
+  return html;
+}
+
+/* ── Build region buttons ── */
+function buildRegionButtons(regionsSummary) {
+  let html = '<div class="region-grid">';
+  for (const key of REGION_ORDER) {
+    const rm = REGION_META[key];
+    const rs = regionsSummary[key] || { count: 0 };
+    if (rs.count === 0 && key === 'Other') continue;
+    html += `<div class="region-btn" onclick="location.hash='region/${encodeURIComponent(key)}'">${escapeHtml(rm.label)}</div>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+/* ── Render: Main View ── */
+function renderMainView() {
+  if (!_newsData) return;
+  const data = _newsData;
+  const cats = data.categories;
+  let totalCount = 0, multiSourceCount = 0;
+  const sourceSet = new Set();
+
+  _allArticles = [];
+  for (const cat of CAT_ORDER) {
+    for (const a of (cats[cat] || [])) {
+      a._cat = cat;
+      _allArticles.push(a);
+      totalCount++;
+      if (a.source_count >= 2) multiSourceCount++;
+      if (a.co_sources) a.co_sources.forEach(s => sourceSet.add(s));
+      else sourceSet.add(a.source);
+    }
+  }
+  _allArticles.sort((a, b) => b.score - a.score);
+
+  let html = '';
+
+  // Stats
+  const activeRegions = REGION_ORDER.filter(r => (data.regions_summary[r]||{}).count > 0).length;
+  html += `<div class="stats-bar">
+    <div class="stat-item"><span class="stat-number">${totalCount}</span><span class="stat-label">Articles</span></div>
+    <div class="stat-item"><span class="stat-number">${sourceSet.size}</span><span class="stat-label">Sources</span></div>
+    <div class="stat-item"><span class="stat-number">${multiSourceCount}</span><span class="stat-label">Multi-source</span></div>
+    <div class="stat-item"><span class="stat-number">${activeRegions}</span><span class="stat-label">Regions</span></div>
+  </div>`;
+
+  // Top Stories — use raw_score (without APAC boost) for global ranking
+  const topStories = [..._allArticles].sort((a, b) => (b.raw_score || b.score) - (a.raw_score || a.score)).slice(0, 4);
+  if (topStories.length) {
+    html += '<div class="top-stories"><div class="section-label">Top Stories</div><div class="top-grid">';
+    for (const a of topStories) {
+      const m = CAT_META[a._cat] || { color: '#666' };
+      html += buildTopCardHtml(a, m.color);
+    }
+    html += '</div></div>';
+  }
+
+  // Region Buttons
+  html += '<div class="region-section"><div class="section-label">By Region</div>';
+  html += buildRegionButtons(data.regions_summary);
+  html += '</div>';
+
+  // Categories
+  html += buildCategoriesHtml(_allArticles, true);
+
+  if (!html) html = '<div class="loading">No articles found in the past 48 hours.</div>';
+  document.getElementById('content').innerHTML = html;
+}
+
+/* ── Render: Region View ── */
+function renderRegionView(regionKey) {
+  if (!_newsData) return;
+  const rm = REGION_META[regionKey] || { color: '#6b7280', label: regionKey };
+
+  const regionArticles = _allArticles.filter(a => a.region === regionKey);
+  regionArticles.sort((a, b) => b.score - a.score);
+
+  let html = '';
+  html += `<button class="back-btn" onclick="location.hash=''">&#8592; Back to overview</button>`;
+  html += `<div class="region-view-header">
+    <h2 style="color:${rm.color}">${escapeHtml(rm.label)}</h2>
+    <span class="region-article-count">${regionArticles.length} articles</span>
+  </div>`;
+
+  const topRegion = regionArticles.slice(0, 3);
+  if (topRegion.length) {
+    html += '<div class="top-stories"><div class="section-label">Top in ' + escapeHtml(rm.label) + '</div><div class="top-grid">';
+    for (const a of topRegion) html += buildTopCardHtml(a, rm.color);
+    html += '</div></div>';
+  }
+
+  html += buildCategoriesHtml(regionArticles, false);
+
+  if (!regionArticles.length) {
+    html += '<div class="loading">No articles found for this region.</div>';
+  }
+  document.getElementById('content').innerHTML = html;
+}
+
+/* ── Routing ── */
+function handleRoute() {
+  const hash = decodeURIComponent(window.location.hash);
+  const match = hash.match(/^#region\/(.+)$/);
+  if (match && REGION_META[match[1]]) {
+    renderRegionView(match[1]);
+    window.scrollTo(0, 0);
+  } else {
+    renderMainView();
+  }
+}
+
+/* ── Category toggle ── */
+function toggleCat(id) {
+  const body = document.getElementById('body-' + id);
+  const toggle = document.getElementById('toggle-' + id);
+  if (!body) return;
+  if (body.classList.contains('collapsed')) {
+    body.classList.remove('collapsed');
+    toggle.innerHTML = '&#9660;';
+  } else {
+    body.classList.add('collapsed');
+    toggle.innerHTML = '&#9654;';
+  }
+}
+
+/* ── Load data ── */
+async function loadNews(force) {
+  const btn = document.getElementById('refreshBtn');
+  btn.disabled = true; btn.textContent = 'Loading...';
+  try {
+    const resp = await fetch('/api/news' + (force ? '?force=1' : ''));
+    const data = await resp.json();
+    _newsData = data;
+
+    document.getElementById('updated').textContent = 'Updated ' + new Date(data.last_updated).toLocaleString();
+
+    const errEl = document.getElementById('errors');
+    if (data.errors && data.errors.length) {
+      errEl.innerHTML = '<div class="errors-banner">Some feeds failed: ' +
+        data.errors.map(e => escapeHtml(e)).join('; ') + '</div>';
+    } else { errEl.innerHTML = ''; }
+
+    _allArticles = [];
+    for (const cat of CAT_ORDER) {
+      for (const a of (data.categories[cat] || [])) { a._cat = cat; _allArticles.push(a); }
+    }
+    _allArticles.sort((a, b) => b.score - a.score);
+
+    handleRoute();
+  } catch (e) {
+    document.getElementById('content').innerHTML =
+      '<div class="loading">Failed to load news. Is the server running?</div>';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Refresh';
+  }
+}
+
+window.addEventListener('hashchange', handleRoute);
+loadNews(false);
+</script>
+</body>
+</html>
