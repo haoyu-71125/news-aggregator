@@ -154,7 +154,7 @@ REASON_TEMPLATES = {
 
 # Simple in-memory cache
 _cache = {"data": None, "timestamp": 0}
-CACHE_TTL = 300  # 5 minutes
+CACHE_TTL = 3600  # 1 hour
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
